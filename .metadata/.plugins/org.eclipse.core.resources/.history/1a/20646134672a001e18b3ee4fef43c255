@@ -1,0 +1,101 @@
+import jakarta.mail.*;
+import jakarta.mail.internet.*;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Properties;
+
+//Custom exception
+class AuthenticationFailedException extends Exception {
+    public AuthenticationFailedException(String errorMessage) {
+        super(errorMessage);
+    }
+}
+
+public class EmailSender {
+    final String toEmail = "matthewbruno01@outlook.com";
+    private String username;
+    private String subject;
+    private String emailContent;
+    private Properties properties;
+    private Session session;
+    private HashMap emailNameMap;
+    private HashSet emailBlacklist;
+    
+    public EmailSender() {
+        this.properties = new Properties();
+        properties.put("mail.smtp.host", "smtp-mail.outlook.com");
+        properties.put("mail.smtp.port", "587");
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.starttls.enable", "true");      
+    }
+    
+    public boolean signIn(String email, String password) throws AuthenticationFailedException {
+        this.session = Session.getInstance(this.properties, new Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(email, password);
+            }
+        });
+
+        try {
+            Transport transport = session.getTransport("smtp");
+            transport.connect(properties.getProperty("mail.smtp.host"), email, password);
+            transport.close();
+        } catch (MessagingException e) {
+            throw new AuthenticationFailedException("Failed to authenticate email session");
+        }
+
+        this.username = email;
+        System.out.println("Successfully signed in");
+        return true;
+    }
+  
+    private String readContentFromFile(String filePath) {
+        StringBuilder content = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return content.toString();
+    }
+    
+    private void setEmailNameMap(HashMap<String, String> emailNameMap) {
+    	this.emailNameMap = emailNameMap;
+    }
+    
+    private String getSubject() {
+    	return this.subject;
+    }
+    
+    private void setEmailBody(String body) {
+    	this.emailContent = body;
+    }
+    
+    private String getEmailBody() {
+    	return this.emailContent;
+    }
+    
+    public boolean sendEmail(String emailSubject, String emailBody) throws MessagingException, IOException {
+        Message message = new MimeMessage(this.session);
+        message.setFrom(new InternetAddress(username));
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+        message.setSubject(emailSubject);
+        //emailContent = readContentFromFile("email_template.txt");
+        message.setText(emailBody);
+        Transport.send(message);
+        System.out.println("Sent message successfully....");
+        return true;
+    }
+    
+    //Added code here. Blacklist method
+    public void addToBlacklist(String email) {
+    	this.emailBlacklist.add(email);
+    }
+}

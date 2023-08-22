@@ -1,0 +1,170 @@
+import jakarta.mail.*;
+import jakarta.mail.internet.*;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Properties;
+
+//Custom exception
+class AuthenticationFailedException extends Exception {
+    public AuthenticationFailedException(String errorMessage) {
+        super(errorMessage);
+    }
+}
+
+public class EmailSender {
+    final String toEmail = "matthewbruno01@outlook.com";
+    // psw: onepiece01@
+    private String username;
+    private String subject;
+    private String emailContent;
+    private Properties properties;
+    private Session session;
+    private HashMap <String, String>emailNameMap;
+    private HashSet<String> emailBlacklist;
+    
+    public EmailSender() {
+        this.properties = new Properties();
+        properties.put("mail.smtp.host", "smtp-mail.outlook.com");
+        properties.put("mail.smtp.port", "587");
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.starttls.enable", "true");      
+    }
+    
+    public boolean signIn(String email, String password) throws AuthenticationFailedException {
+        this.session = Session.getInstance(this.properties, new Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(email, password);
+            }
+        });
+
+        try {
+            Transport transport = session.getTransport("smtp");
+            transport.connect(properties.getProperty("mail.smtp.host"), email, password);
+            transport.close();
+        } catch (MessagingException e) {
+            throw new AuthenticationFailedException("Failed to authenticate email session");
+        }
+
+        this.username = email;
+        System.out.println("Successfully signed in");
+        return true;
+    }
+  
+    private String readContentFromFile(String filePath) {
+        StringBuilder content = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return content.toString();
+    }
+    
+    public void setEmailNameMap(HashMap<String, String> emailNameMap) {
+    	this.emailNameMap = emailNameMap;
+    }
+    
+    public String getSubject() {
+    	return this.subject;
+    }
+    
+    public void setSubject(String subject) {
+    	this.subject = subject;
+    }
+    
+    public void setEmailBody(String body) {
+    	this.emailContent = body;
+    }
+    
+    public String getEmailBody() {
+    	return this.emailContent;
+    }
+    
+    private void filterBlacklistedEmails() {
+        int count = 0; // Step 1: Declare a variable to keep track of the count
+
+        for (String blacklistedEmail : this.emailBlacklist) {
+            try {
+                if (this.emailNameMap.containsKey(blacklistedEmail)) { // Step 1: Check if the key exists in the map
+                    if (this.emailNameMap.remove(blacklistedEmail) != null) { // Step 2: Increment the count only if the key is successfully removed
+                        count++;
+                    }
+                }
+            } catch (Exception e) {
+                // Handle the exception gracefully (if needed)
+                System.out.println("An error occurred while removing the email '" + blacklistedEmail + "'.");
+            }
+        }
+
+        // Step 3: Output the count of blacklisted emails found
+        System.out.println("Number of blacklisted emails found: " + count);
+    }
+
+
+    
+    public void setEmailBlacklist(HashSet<String> blacklist) {
+    	this.emailBlacklist = blacklist;
+    	this.filterBlacklistedEmails();
+    	
+    	// TEST LINE
+    	if(this.emailNameMap == null) return;
+    	System.out.println("Filtered Email List: \n");
+    	for(Entry<String, String> entry : this.emailNameMap.entrySet()) {
+    		System.out.println(entry.getKey() + " " + entry.getValue());
+    	}
+    }
+    
+    public void getEmailBlacklistFromSender() {
+    	System.out.println("Blacklist:\n");
+    	
+    	if(this.emailBlacklist == null) return;
+    	
+    	for(String email : this.emailBlacklist) {
+    		System.out.println(email);
+    	}
+    }
+    
+    //make method to write each name into email body and send all
+    
+    public boolean sendEmail(String emailSubject, String emailBody) throws MessagingException, IOException {
+        Message message = new MimeMessage(this.session);
+        message.setFrom(new InternetAddress(username));
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+        message.setSubject(emailSubject);
+        //emailContent = readContentFromFile("email_template.txt");
+        message.setText(emailBody);
+        Transport.send(message);
+        System.out.println("Sent message successfully....");
+        return true;
+    }
+    
+    public boolean sendAllEmails(String emailSubject, String emailBodyTemplate) throws MessagingException, IOException {
+    	for(Map.Entry<String, String> entry : this.emailNameMap.entrySet()) {
+    		String emailBody = emailBodyTemplate.replace("[NAME]", entry.getKey()); 
+    		Message message = new MimeMessage(this.session);
+            message.setFrom(new InternetAddress(username));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            message.setSubject(emailSubject);
+            message.setText(emailBody);
+            Transport.send(message);
+            System.out.println("Sent message successfully to " + entry.getKey() + " / " + entry.getValue());
+    	}
+    	return true;
+    }
+    
+   
+}

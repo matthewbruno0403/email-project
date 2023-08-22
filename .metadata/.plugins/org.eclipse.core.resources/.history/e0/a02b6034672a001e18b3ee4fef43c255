@@ -1,0 +1,28 @@
+public class main {
+
+	public static void main(String[] args) {
+        try {
+//            String poop2 = "Hello {Name},\r\n"
+//            		+ "\r\n"
+//            		+ "New York Environmental is a NYS Certified Minority Business Entity that performs environmental consulting and in-house laboratory services. I am writing to see if you are looking for an MBE to partner with on the upcoming SUNY Downstate Health Sciences University.   \r\n"
+//            		+ "\r\n"
+//            		+ "Please see the attached my v-card and firm profile, which goes into greater detail about our capabilities. \r\n"
+//            		+ "\r\n"
+//            		+ "If you have any questions, or I can be of service, please contact me at (516) 944-9500, or kbruno@nyenvironmental.com.\r\n"
+//            		+ "\r\n"
+//            		+ " \r\n"
+//            		+ "Thank you,\r\n"
+//            		+ "\r\n"
+//            		+ "Kurt";
+//        	EmailSender poopie = new EmailSender();
+//            poopie.signIn("matthewbruno01@outlook.com", "Onepiece01@");
+//            poopie.sendEmail("cum",poop2);
+        	EmailGUI gui = new EmailGUI();
+   
+        } catch (Exception e) {
+            // Handle the exception specific to EmailGUI initialization
+            e.printStackTrace();
+        }
+	}
+
+}

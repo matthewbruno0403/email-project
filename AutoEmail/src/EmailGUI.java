@@ -1,0 +1,390 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+
+import jakarta.mail.MessagingException;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.prefs.Preferences;
+//import jakarta.mail.AuthenticationFailedException;
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
+
+//Custom exception
+class AuthenticationFailedException extends Exception {
+  public AuthenticationFailedException(String errorMessage) {
+      super(errorMessage);
+  }
+}
+
+public class EmailGUI extends JFrame {
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private JButton loginButton;
+    private JPanel loginPanel;
+    private JPanel emailScreenPanel;
+    private JPanel previewEmailPanel;
+    private EmailSender sender;
+    private String subject = "";
+    private String body = "";
+    
+    private HashMap<String, String> pdfMap;
+    //private HashSet<String> blacklist;
+
+    public EmailGUI() {
+        this.sender = new EmailSender();
+    	
+    	setTitle("Email GUI");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new FlowLayout());
+
+        usernameField = new JTextField(20);
+        passwordField = new JPasswordField(20);
+        loginButton = new JButton("Login");
+
+        ActionListener loginActionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+					performLogin();
+				} catch (AuthenticationFailedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+            }
+        };
+
+        KeyListener enterKeyListener = new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+        };
+
+        usernameField.addActionListener(loginActionListener);
+        usernameField.addKeyListener(enterKeyListener);
+        passwordField.addActionListener(loginActionListener);
+        passwordField.addKeyListener(enterKeyListener);
+        loginButton.addActionListener(loginActionListener);
+
+        loginPanel = new JPanel();
+        loginPanel.setLayout(new FlowLayout());
+        loginPanel.add(new JLabel("Outlook Email:"));
+        loginPanel.add(usernameField);
+        loginPanel.add(new JLabel("Password:"));
+        loginPanel.add(passwordField);
+        loginPanel.add(loginButton);
+
+        add(loginPanel);
+
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
+       
+    }
+
+    private void performLogin() throws AuthenticationFailedException {
+        String username = usernameField.getText();
+        String password = new String(passwordField.getPassword());
+        boolean loggedIn = false;
+        
+        //Giving an error for some reason
+        
+        loggedIn = EmailGUI.this.sender.signIn(username, password);
+        
+        // Perform login logic here
+        if (loggedIn == true) {
+            // Successful login, route to new screen or perform other operations
+            JOptionPane.showMessageDialog(null, "Login successful!");
+            showNewScreen(); // Code to show new screen
+        } else {
+            // Invalid login, print error and clear fields
+            JOptionPane.showMessageDialog(null, "Invalid username or password!", "Error", JOptionPane.ERROR_MESSAGE);
+            usernameField.setText("");
+            passwordField.setText("");
+            //remove later!! 
+            //showNewScreen();
+        }
+    }
+
+    private void showNewScreen() {
+        // Code to show the new screen or perform other operations based on successful login
+        loginPanel.setVisible(false);
+
+        emailScreenPanel = new JPanel();
+        emailScreenPanel.setLayout(new BoxLayout(emailScreenPanel, BoxLayout.Y_AXIS));
+
+        JTextField subjectField = new JTextField(20);
+        JTextArea bodyArea = new JTextArea(10, 20);
+        subjectField.setText(EmailGUI.this.subject);
+        bodyArea.setText(EmailGUI.this.body);
+        JButton uploadButton = new JButton("Upload PDF");
+        JButton nextButton = new JButton("Next");
+
+        ActionListener nextActionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Code to handle "Next" button action
+            	EmailGUI.this.subject = subjectField.getText();
+            	EmailGUI.this.body = bodyArea.getText();
+            	EmailGUI.this.sender.setSubject(EmailGUI.this.subject);
+            	EmailGUI.this.sender.setEmailBody(EmailGUI.this.body);
+            	previewEmailScreen();
+            	
+            	BlacklistPanel panel;
+                JFrame blacklistFrame = new JFrame();
+                blacklistFrame.add(new BlacklistPanel());
+                blacklistFrame.pack();
+                blacklistFrame.setVisible(true);
+                panel = (BlacklistPanel) blacklistFrame.getContentPane().getComponent(0);
+                EmailGUI.this.sender.setEmailBlacklist(panel.getBlacklist());
+      
+            }
+        };
+
+        KeyListener nextKeyListener = new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    // Code to handle "Next" button action
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+        };
+        
+        uploadButton.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+                int result = fileChooser.showOpenDialog(EmailGUI.this);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    TestPDFBox test = new TestPDFBox(selectedFile.getAbsolutePath());
+                    EmailGUI.this.pdfMap = test.scanPdf();
+                }
+                
+                if (EmailGUI.this.pdfMap != null) {
+                    // Successful login, route to new screen or perform other operations
+                	JOptionPane.showMessageDialog(null, "PDF upload successful!");
+                	EmailGUI.this.sender.setEmailNameMap(pdfMap);
+                } else {
+                    // Invalid login, print error and clear fields
+                    JOptionPane.showMessageDialog(null, "PDF was not uploaded", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+             }  
+        });
+
+//        uploadButton.addActionListener(nextActionListener);
+//        uploadButton.addKeyListener(nextKeyListener);
+        nextButton.addActionListener(nextActionListener);
+        nextButton.addKeyListener(nextKeyListener);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(uploadButton);
+        buttonPanel.add(nextButton);
+
+        emailScreenPanel.add(new JLabel("Subject:"));
+        emailScreenPanel.add(subjectField);
+        emailScreenPanel.add(new JLabel("Body:"));
+        emailScreenPanel.add(new JScrollPane(bodyArea));
+        emailScreenPanel.add(buttonPanel);
+
+        add(emailScreenPanel);
+
+        setSize(300, 300);
+        setLocationRelativeTo(null);
+        revalidate();
+        repaint();
+    }
+    
+    private void previewEmailScreen() {
+    	
+    	// Hide this panel
+    	emailScreenPanel.setVisible(false);
+    	
+        // Create the preview email panel
+        previewEmailPanel = new JPanel();
+        previewEmailPanel.setLayout(new BorderLayout());
+
+        // Create the input components
+        JTextField subjectField = new JTextField(20);
+        JTextArea bodyArea = new JTextArea(10, 20);
+        
+        // Load the saved subject and body values from preferences
+        Preferences prefs = Preferences.userNodeForPackage(EmailGUI.class);
+        String savedSubject = prefs.get("subject", "");
+        String savedBody = prefs.get("body", "");
+        subjectField.setText(savedSubject);
+        bodyArea.setText(savedBody);
+        
+        // Set Subject and Body 
+        subjectField.setText(EmailGUI.this.subject);
+        bodyArea.setText(EmailGUI.this.body);
+        
+        // Make the text fields unmodifiable
+        subjectField.setEditable(false);
+        bodyArea.setEditable(false);
+
+        // Create the buttons
+        JButton backButton = new JButton("Back");
+        JButton nextButton = new JButton("Next");
+        JButton sendPreviewEmailButton = new JButton("Send Preview Email");
+        JButton blacklistButton = new JButton("Email Blacklist");
+
+        // Create the panel for the blacklist button
+        //JPanel blacklistButtonPanel = new JPanel();
+
+        // Button panel for positioning the buttons
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new BorderLayout());
+        buttonPanel.add(backButton, BorderLayout.WEST);
+        buttonPanel.add(nextButton, BorderLayout.EAST);
+        buttonPanel.add(sendPreviewEmailButton, BorderLayout.CENTER);
+        buttonPanel.add(blacklistButton, BorderLayout.SOUTH);
+
+        // Add the components to the preview email panel
+        previewEmailPanel.add(new JLabel("Subject:"), BorderLayout.NORTH);
+        previewEmailPanel.add(subjectField, BorderLayout.NORTH);
+        previewEmailPanel.add(new JLabel("Body:"), BorderLayout.CENTER);
+        previewEmailPanel.add(new JScrollPane(bodyArea), BorderLayout.CENTER);
+        previewEmailPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Register action listeners for the buttons
+        backButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Code to handle "Back" button action
+            	EmailGUI.this.showNewScreen();
+            	previewEmailPanel.setVisible(false);
+            	
+            }
+        });
+
+        nextButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Code to handle "Next" button action
+            	
+            	//TEST LINE
+            	//EmailGUI.this.sender.getEmailBlacklistFromSender();
+            	
+//            	JFrame frame = new JFrame();
+//                frame.setSize(400, 200);
+//                frame.setLocationRelativeTo(null);
+//                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//                frame.setVisible(true);
+            	try {
+					EmailGUI.this.sender.sendAllEmails(EmailGUI.this.subject, EmailGUI.this.body);
+				} catch (MessagingException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+            	
+            }
+        });
+
+        sendPreviewEmailButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Code to handle "Send Preview Email" button action
+            	try {
+					EmailGUI.this.sender.sendEmail(EmailGUI.this.subject, EmailGUI.this.body);
+				} catch (MessagingException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+            }
+        });
+        
+        // Add action listener to the blacklist button
+        blacklistButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	//when blacklist button is pressed -> add custom jframe & setVisible
+            	BlacklistPanel panel;
+                JFrame blacklistFrame = new JFrame();
+                blacklistFrame.add(new BlacklistPanel());
+                blacklistFrame.pack();
+                blacklistFrame.setVisible(true);
+                panel = (BlacklistPanel) blacklistFrame.getContentPane().getComponent(0);
+                EmailGUI.this.sender.setEmailBlacklist(panel.getBlacklist());
+            }
+         });
+
+
+        // Add the preview email panel to the main container
+        add(previewEmailPanel);
+
+        // Set the size and positioning of the panel
+        setSize(300, 300);
+        setLocationRelativeTo(null);
+        revalidate();
+        repaint();
+    }
+
+
+
+    private static void openPdfDialog() {
+        // Create a file chooser
+        JFileChooser fileChooser = new JFileChooser();
+        
+        // Set the file filter to restrict selection to PDF files
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+          @Override
+          public boolean accept(File file) {
+            return file.isDirectory() || file.getName().toLowerCase().endsWith(".pdf");
+          }
+          
+          @Override
+          public String getDescription() {
+            return "PDF Files (*.pdf)";
+          }
+        });
+        
+        // Show the file chooser dialog
+        int result = fileChooser.showOpenDialog(null);
+        
+        // Process the selected file using Apache PDFBox
+        if (result == JFileChooser.APPROVE_OPTION) {
+          File selectedFile = fileChooser.getSelectedFile();
+          // Add your PDFBox functionality here
+          System.out.println("Selected PDF file: " + selectedFile.getAbsolutePath());
+        }
+      }
+}
+

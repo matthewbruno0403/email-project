@@ -1,0 +1,90 @@
+import jakarta.mail.*;
+import jakarta.mail.internet.*;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Properties;
+
+public class EmailSender {
+    // Final String values to represent the recipient's email address and the email's content
+    final String toEmail = "matthewbruno01@outlook.com";
+    String username;
+    String emailContent;
+    Properties properties;
+    Session session;
+    
+    public EmailSender() {
+        // Server properties
+        this.properties = new Properties();
+        properties.put("mail.smtp.host", "smtp-mail.outlook.com");
+        properties.put("mail.smtp.port", "587");
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.starttls.enable", "true");      
+    }
+    
+    public boolean signIn(String email, String password) {
+    	// Sender's credentials
+        final String usernameTest = "matthewbruno01@outlook.com";
+        final String passwordTest = "Onepiece01@";
+
+         this.session = Session.getInstance(this.properties, new Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(usernameTest, passwordTest);
+            }
+        });
+        
+        //check if password auth worked and print error if not
+         
+        //if false
+         
+        //if true
+        this.username = usernameTest;
+        return true;
+    }
+    
+    private String readContentFromFile(String filePath) {
+        StringBuilder content = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return content.toString();
+    }
+    
+    public boolean sendEmail(){
+    	 try {
+             // Create a default MimeMessage object
+             Message message = new MimeMessage(this.session);
+
+             // Set From: header field of the header
+             message.setFrom(new InternetAddress(username));
+
+             // Set To: header field of the header
+             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+
+             // Set Subject: header field
+             message.setSubject("Testing Subject");
+             
+             // Read the content from a file
+             emailContent = readContentFromFile("email_template.txt");
+
+             // Set the actual message
+             message.setText(emailContent);
+
+             // Send message
+             Transport.send(message);
+
+             System.out.println("Sent message successfully....");
+             return true;
+
+         } catch (MessagingException e) {
+             System.out.println("Error sending email");
+        	 throw new RuntimeException(e);
+         }
+    }
+}

@@ -1,0 +1,154 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+
+public class EmailGUI extends JFrame {
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private JButton loginButton;
+    private JPanel loginPanel;
+    private JPanel newScreenPanel;
+
+    public EmailGUI() {
+        setTitle("Email GUI");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new FlowLayout());
+
+        usernameField = new JTextField(20);
+        passwordField = new JPasswordField(20);
+        loginButton = new JButton("Login");
+
+        ActionListener loginActionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                performLogin();
+            }
+        };
+
+        KeyListener enterKeyListener = new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    performLogin();
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+        };
+
+        usernameField.addActionListener(loginActionListener);
+        usernameField.addKeyListener(enterKeyListener);
+        passwordField.addActionListener(loginActionListener);
+        passwordField.addKeyListener(enterKeyListener);
+        loginButton.addActionListener(loginActionListener);
+
+        loginPanel = new JPanel();
+        loginPanel.setLayout(new FlowLayout());
+        loginPanel.add(new JLabel("Outlook Email:"));
+        loginPanel.add(usernameField);
+        loginPanel.add(new JLabel("Password:"));
+        loginPanel.add(passwordField);
+        loginPanel.add(loginButton);
+
+        add(loginPanel);
+
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+
+    private void performLogin() {
+        String username = usernameField.getText();
+        String password = new String(passwordField.getPassword());
+
+        // Perform login logic here
+        if (username.equals("poop") && password.equals("pee")) {
+            // Successful login, route to new screen or perform other operations
+            JOptionPane.showMessageDialog(null, "Login successful!");
+            showNewScreen(); // Code to show new screen
+        } else {
+            // Invalid login, print error and clear fields
+            JOptionPane.showMessageDialog(null, "Invalid username or password!", "Error", JOptionPane.ERROR_MESSAGE);
+            usernameField.setText("");
+            passwordField.setText("");
+        }
+    }
+
+    private void showNewScreen() {
+        // Code to show the new screen or perform other operations based on successful login
+        loginPanel.setVisible(false);
+
+        newScreenPanel = new JPanel();
+        newScreenPanel.setLayout(new BoxLayout(newScreenPanel, BoxLayout.Y_AXIS));
+
+        JTextField subjectField = new JTextField(20);
+        JTextArea bodyArea = new JTextArea(10, 20);
+        JButton uploadButton = new JButton("Upload PDF");
+        JButton nextButton = new JButton("Next");
+
+        ActionListener nextActionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Code to handle "Next" button action
+            }
+        };
+
+        KeyListener nextKeyListener = new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    // Code to handle "Next" button action
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+        };
+
+        uploadButton.addActionListener(nextActionListener);
+        uploadButton.addKeyListener(nextKeyListener);
+        nextButton.addActionListener(nextActionListener);
+        nextButton.addKeyListener(nextKeyListener);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(uploadButton);
+        buttonPanel.add(nextButton);
+
+        newScreenPanel.add(new JLabel("Subject:"));
+        newScreenPanel.add(subjectField);
+        newScreenPanel.add(new JLabel("Body:"));
+        newScreenPanel.add(new JScrollPane(bodyArea));
+        newScreenPanel.add(buttonPanel);
+
+        add(newScreenPanel);
+
+        setSize(300, 300);
+        setLocationRelativeTo(null);
+        revalidate();
+        repaint();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new EmailGUI();
+            }
+        });
+    }
+}
