@@ -1,0 +1,14 @@
+public class main {
+
+	public static void main(String[] args) {
+		//TestPDFBox.scanPdf();
+		EmailSender poop = new EmailSender();
+		try {
+			poop.signIn("matthewbruno01@outlook.com", "Onepiece01@");
+		} catch (AuthenticationFailedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+}

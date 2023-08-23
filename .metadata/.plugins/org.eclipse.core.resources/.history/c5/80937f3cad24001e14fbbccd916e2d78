@@ -1,0 +1,20 @@
+import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class EmailGUI {
+	
+	public void emailGUI() {
+		
+		JFrame frame = new JFrame("Email Sender");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setSize(300,300);
+		frame.setLocation(300,200);
+		JButton button = new JButton("Next");
+		frame.getContentPane().add(button);
+		frame.setVisible(true);
+		
+	}
+
+}

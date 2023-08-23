@@ -1,0 +1,81 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class EmailGUI extends JFrame {
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private JButton loginButton;
+
+    public EmailGUI() {
+        setTitle("Email GUI");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new FlowLayout());
+
+        usernameField = new JTextField(20);
+        passwordField = new JPasswordField(20);
+        loginButton = new JButton("Login");
+
+        loginButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String username = usernameField.getText();
+                String password = new String(passwordField.getPassword());
+
+                // Perform login logic here
+                if (username.equals("poop") && password.equals("pee")) {
+                    // Successful login, route to new screen or perform other operations
+                    JOptionPane.showMessageDialog(null, "Login successful!");
+                    openNewScreen(); // Code to open new screen
+                } else {
+                    // Invalid login, print error and clear fields
+                    JOptionPane.showMessageDialog(null, "Invalid username or password!", "Error", JOptionPane.ERROR_MESSAGE);
+                    usernameField.setText("");
+                    passwordField.setText("");
+                }
+            }
+        });
+
+        add(new JLabel("Outlook Email:"));
+        add(usernameField);
+        add(new JLabel("Password:"));
+        add(passwordField);
+        add(loginButton);
+
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+
+    private void openNewScreen() {
+        // Code to open the new screen or perform other operations based on successful login
+        JFrame newFrame = new JFrame("Compose Email");
+        newFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        newFrame.setLayout(new FlowLayout());
+        newFrame.setSize(300, 300);
+
+        JTextField subjectField = new JTextField(20);
+        JTextArea bodyArea = new JTextArea(10, 20);
+        JButton uploadButton = new JButton("Upload PDF");
+
+        newFrame.add(new JLabel("Subject:"));
+        newFrame.add(subjectField);
+        newFrame.add(new JLabel("Body:"));
+        newFrame.add(new JScrollPane(bodyArea));
+        newFrame.add(uploadButton);
+
+        newFrame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new EmailGUI();
+            }
+        });
+    }
+}
+
+

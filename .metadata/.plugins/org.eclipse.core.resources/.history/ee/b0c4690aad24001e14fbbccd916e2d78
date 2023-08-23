@@ -1,0 +1,23 @@
+public class main {
+
+	public static void main(String[] args) {
+		//TestPDFBox.scanPdf();
+		EmailSender email = new EmailSender();
+		EmailGUI gui = new EmailGUI();
+		try {
+			email.signIn("matthewbruno01@outlook.com", "Onepiece01@");
+		} catch (AuthenticationFailedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+        try {
+            gui = new EmailGUI();
+        } catch (Exception e) {
+            // Handle the exception specific to EmailGUI initialization
+            e.printStackTrace();
+        }
+    }
+	}
+
+}
