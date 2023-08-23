@@ -8,15 +8,28 @@ import java.util.regex.Pattern;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * A class that uses PDFBox library to scan a PDF file and extract names and email addresses.
+ */
 public class TestPDFBox {
     private String pdfFilePath;
     private HashMap<String, String> emailMap; 
 
+    /**
+     * Constructs a TestPDFBox object with the specified PDF file path.
+     * 
+     * @param pdfFile The path of the PDF file to scan.
+     */
     public TestPDFBox(String pdfFile) {
         this.pdfFilePath = pdfFile; // Assign file path
         this.emailMap = new HashMap<String, String>();
     }
     
+    /**
+     * Scans the PDF file and extracts names and email addresses.
+     * 
+     * @return A HashMap containing email addresses as keys and names as values.
+     */
     public HashMap<String, String> scanPdf() {     	
     	String namePattern = "(?<=Attention:)(.*)";
     	String emailPattern = "\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b";
@@ -50,3 +63,4 @@ public class TestPDFBox {
 		return null;
     }
 }
+

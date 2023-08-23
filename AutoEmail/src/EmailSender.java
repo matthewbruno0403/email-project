@@ -2,25 +2,13 @@ import jakarta.mail.*;
 import jakarta.mail.internet.*;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
 import java.util.Properties;
-
-//Custom exception
-class AuthenticationFailedException extends Exception {
-    public AuthenticationFailedException(String errorMessage) {
-        super(errorMessage);
-    }
-}
 
 public class EmailSender {
     final String toEmail = "matthewbruno01@outlook.com";
@@ -30,7 +18,7 @@ public class EmailSender {
     private String emailContent;
     private Properties properties;
     private Session session;
-    private HashMap <String, String> emailNameMap;
+    private HashMap<String, String> emailNameMap;
     private HashSet<String> emailBlacklist;
     
     public EmailSender() {
@@ -41,6 +29,14 @@ public class EmailSender {
         properties.put("mail.smtp.starttls.enable", "true");      
     }
     
+    /**
+     * Sign in to the email account.
+     * 
+     * @param email    The email address.
+     * @param password The password for the email account.
+     * @return True if the sign-in is successful, false otherwise.
+     * @throws AuthenticationFailedException If the authentication fails.
+     */
     public boolean signIn(String email, String password) throws AuthenticationFailedException {
         this.session = Session.getInstance(this.properties, new Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -61,39 +57,73 @@ public class EmailSender {
         return true;
     }
   
-    private String readContentFromFile(String filePath) {
-        StringBuilder content = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                content.append(line).append("\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return content.toString();
-    }
+//    /**
+//     * Read the content from a file.
+//     * 
+//     * @param filePath The path of the file to read.
+//     * @return The content of the file as a string.
+//     */
+//    private String readContentFromFile(String filePath) {
+//        StringBuilder content = new StringBuilder();
+//        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+//            String line;
+//            while ((line = reader.readLine()) != null) {
+//                content.append(line).append("\n");
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        return content.toString();
+//    }
     
+    /**
+     * Set the email-to-name mapping.
+     * 
+     * @param emailNameMap The mapping of email addresses to names.
+     */
     public void setEmailNameMap(HashMap<String, String> emailNameMap) {
-    	this.emailNameMap = emailNameMap;
+        this.emailNameMap = emailNameMap;
     }
     
+    /**
+     * Get the subject of the email.
+     * 
+     * @return The subject of the email.
+     */
     public String getSubject() {
-    	return this.subject;
+        return this.subject;
     }
     
+    /**
+     * Set the subject of the email.
+     * 
+     * @param subject The subject of the email.
+     */
     public void setSubject(String subject) {
-    	this.subject = subject;
+        this.subject = subject;
     }
     
+    /**
+     * Set the body of the email.
+     * 
+     * @param body The body of the email.
+     */
     public void setEmailBody(String body) {
-    	this.emailContent = body;
+        this.emailContent = body;
     }
     
+    /**
+     * Get the body of the email.
+     * 
+     * @return The body of the email.
+     */
     public String getEmailBody() {
-    	return this.emailContent;
+        return this.emailContent;
     }
     
+    /**
+     * Filter out blacklisted emails from the email-to-name mapping.
+     */
     private void filterBlacklistedEmails() {
         int count = 0; // Step 1: Declare a variable to keep track of the count
 
@@ -114,32 +144,46 @@ public class EmailSender {
         System.out.println("Number of blacklisted emails found: " + count);
     }
 
-
-    
+    /**
+     * Sets the blacklist of email addresses and filters out any blacklisted emails from the emailNameMap.
+     * Prints the filtered email list.
+     * 
+     * @param blacklist The HashSet of blacklisted email addresses.
+     */
     public void setEmailBlacklist(HashSet<String> blacklist) {
-    	this.emailBlacklist = blacklist;
-    	this.filterBlacklistedEmails();
-    	
-    	// TEST LINE
-    	if(this.emailNameMap == null) return;
-    	System.out.println("Filtered Email List: \n");
-    	for(Entry<String, String> entry : this.emailNameMap.entrySet()) {
-    		System.out.println(entry.getKey() + " " + entry.getValue());
-    	}
+        this.emailBlacklist = blacklist;
+        this.filterBlacklistedEmails();
+        
+        // TEST LINE
+        if(this.emailNameMap == null) return;
+        System.out.println("Filtered Email List: \n");
+        for(Entry<String, String> entry : this.emailNameMap.entrySet()) {
+            System.out.println(entry.getKey() + " " + entry.getValue());
+        }
     }
-    
+
+    /**
+     * Prints the list of blacklisted email addresses.
+     */
     public void getEmailBlacklistFromSender() {
-    	System.out.println("Blacklist:\n");
-    	
-    	if(this.emailBlacklist == null) return;
-    	
-    	for(String email : this.emailBlacklist) {
-    		System.out.println(email);
-    	}
+        System.out.println("Blacklist:\n");
+        
+        if(this.emailBlacklist == null) return;
+        
+        for(String email : this.emailBlacklist) {
+            System.out.println(email);
+        }
     }
-    
-    //make method to write each name into email body and send all
-    
+
+    /**
+     * Sends an email with the specified subject and body.
+     * 
+     * @param emailSubject The subject of the email.
+     * @param emailBody The body of the email.
+     * @return true if the email is sent successfully, false otherwise.
+     * @throws MessagingException if there is an error in sending the email.
+     * @throws IOException if there is an error in reading the email content from a file.
+     */
     public boolean sendEmail(String emailSubject, String emailBody) throws MessagingException, IOException {
         Message message = new MimeMessage(this.session);
         message.setFrom(new InternetAddress(username));
@@ -151,7 +195,17 @@ public class EmailSender {
         System.out.println("Sent message successfully....");
         return true;
     }
-    
+
+    /**
+     * Sends emails to all recipients in the emailNameMap using the specified subject and email body template.
+     * Replaces the [NAME] placeholder in the email body template with the first name of each recipient.
+     * 
+     * @param emailSubject The subject of the emails.
+     * @param emailBodyTemplate The template for the email body, with [NAME] as the placeholder for the recipient's first name.
+     * @return true if all emails are sent successfully, false otherwise.
+     * @throws MessagingException if there is an error in sending the emails.
+     * @throws IOException if there is an error in reading the email content from a file.
+     */
     public boolean sendAllEmails(String emailSubject, String emailBodyTemplate) throws MessagingException, IOException {
         for (Map.Entry<String, String> entry : this.emailNameMap.entrySet()) {
             // Extract the first name from entry.getValue()

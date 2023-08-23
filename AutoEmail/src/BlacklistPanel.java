@@ -15,14 +15,14 @@ import java.io.ObjectInputStream;
 public class BlacklistPanel extends JPanel {
     private JList<String> emailList;
     private HashSet<String> emails;
-    
+
     public BlacklistPanel() {
         this.emails = this.deserializeBlacklist();
         setupUI();
     }
-    
-    public HashSet<String> getBlacklist(){
-    	return this.emails;
+
+    public HashSet<String> getBlacklist() {
+        return this.emails;
     }
 
     private void setupUI() {
@@ -36,11 +36,12 @@ public class BlacklistPanel extends JPanel {
         JTextField inputField = new JTextField(20); // Making the textfield wider by specifying column width
         JButton addButton = new JButton("Add to blacklist");
         
+        // ActionListener for the addButton
         addButton.addActionListener(e -> {
             String inputEmail = inputField.getText();
             if (isValidEmail(inputEmail)) { // Validate the input email
                 this.emails.add(inputEmail);
-                this.serializeBlacklist();
+                this.serializeBlacklist(); // Serialize the updated blacklist
                 this.refreshList();
                 inputField.setText("");
             } else {
@@ -51,9 +52,10 @@ public class BlacklistPanel extends JPanel {
         // Button for removing selected email from blacklist
         JButton removeButton = new JButton("Remove from blacklist");
         
+        // ActionListener for the removeButton
         removeButton.addActionListener(e -> {
             this.emails.remove(emailList.getSelectedValue());
-            this.serializeBlacklist();
+            this.serializeBlacklist(); // Serialize the updated blacklist
             this.refreshList();
         });
         
@@ -68,11 +70,12 @@ public class BlacklistPanel extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
     }
     
+    // Serializes the blacklist to a file
     private void serializeBlacklist() {
         try {
             FileOutputStream fos = new FileOutputStream("blacklist.ser");
             ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(this.emails);
+            oos.writeObject(this.emails); // Write the HashSet object to the stream
             oos.close();
             fos.close();
         } catch (IOException ioe) {
@@ -80,19 +83,19 @@ public class BlacklistPanel extends JPanel {
         }
     }
     
+    // Deserializes the blacklist from a file
     private HashSet<String> deserializeBlacklist() {
-        HashSet<String> deserializedEmails = new HashSet<>(); //default, in case file does not exist, or error occurs
+        HashSet<String> deserializedEmails = new HashSet<>(); // Default, in case file does not exist or error occurs
         try {
             FileInputStream fis = new FileInputStream("blacklist.ser");
             ObjectInputStream ois = new ObjectInputStream(fis);
-            deserializedEmails = (HashSet) ois.readObject();
+            deserializedEmails = (HashSet) ois.readObject(); // Read the object from the stream and cast it to HashSet
             ois.close();
             fis.close();
         } catch(IOException ioe) {
             ioe.printStackTrace();
         } catch(ClassNotFoundException cnfe) {
-            cnfe.printStackTrace();
-            
+            cnfe.printStackTrace();   
         }
         return deserializedEmails;
     }
@@ -109,3 +112,4 @@ public class BlacklistPanel extends JPanel {
          return email.matches(emailRegex);
      }
 }
+
