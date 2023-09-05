@@ -187,8 +187,7 @@ public class EmailSender {
      * @throws IOException if there is an error in reading the email content from a file.
      */
     public boolean sendAllEmails(String emailSubject, String emailBodyTemplate) throws MessagingException, IOException {
-        filterBlacklistedEmails();
-    	for (Map.Entry<String, String> entry : this.emailNameMap.entrySet()) {
+        for (Map.Entry<String, String> entry : this.emailNameMap.entrySet()) {
             // Extract the first name from entry.getValue()
             String[] names = entry.getValue().split("\\s");
             String firstName = names[0];
