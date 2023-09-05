@@ -2,8 +2,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -135,8 +137,8 @@ public class EmailGUI extends JFrame {
         loginPanel.setVisible(false);
 
         // Create a new panel for the email screen
-        emailScreenPanel = new JPanel();
-        emailScreenPanel.setLayout(new BoxLayout(emailScreenPanel, BoxLayout.Y_AXIS));
+        this.emailScreenPanel = new JPanel();
+        this.emailScreenPanel.setLayout(new BoxLayout(this.emailScreenPanel, BoxLayout.Y_AXIS));
 
         // Create text fields for subject and body
         JTextField subjectField = new JTextField(20);
@@ -159,18 +161,7 @@ public class EmailGUI extends JFrame {
                 EmailGUI.this.sender.setEmailBody(EmailGUI.this.body);
 
                 // Call the method to preview the email screen
-                previewEmailScreen();
-
-                // Create a frame and panel for the blacklist
-                BlacklistPanel panel;
-                JFrame blacklistFrame = new JFrame();
-                blacklistFrame.add(new BlacklistPanel());
-                blacklistFrame.pack();
-                blacklistFrame.setVisible(true);
-                panel = (BlacklistPanel) blacklistFrame.getContentPane().getComponent(0);
-
-                // Set the email blacklist in the EmailSender
-                EmailGUI.this.sender.setEmailBlacklist(panel.getBlacklist());
+                EmailGUI.this.previewEmailScreen();
             }
         };
 
@@ -235,9 +226,11 @@ public class EmailGUI extends JFrame {
         emailScreenPanel.add(new JLabel("Body:"));
         emailScreenPanel.add(new JScrollPane(bodyArea));
         emailScreenPanel.add(buttonPanel);
-
+        
+        // Remove the existing panel
+        getContentPane().removeAll();
         // Add the email screen panel to the frame
-        add(emailScreenPanel);
+        getContentPane().add(emailScreenPanel);
 
         // Set the size and position of the frame
         setSize(300, 300);
@@ -278,7 +271,7 @@ public class EmailGUI extends JFrame {
 
         // Create the buttons
         JButton backButton = new JButton("Back");
-        JButton nextButton = new JButton("Next");
+        JButton nextButton = new JButton("Send Final Email");
         JButton sendPreviewEmailButton = new JButton("Send Preview Email");
         JButton blacklistButton = new JButton("Email Blacklist");
 
@@ -346,20 +339,71 @@ public class EmailGUI extends JFrame {
                 // When blacklist button is pressed -> add custom JFrame & setVisible
                 BlacklistPanel panel;
                 JFrame blacklistFrame = new JFrame();
+                blacklistFrame.setTitle("Email Blacklist");
                 blacklistFrame.add(new BlacklistPanel());
                 blacklistFrame.pack();
                 blacklistFrame.setVisible(true);
                 panel = (BlacklistPanel) blacklistFrame.getContentPane().getComponent(0);
-                EmailGUI.this.sender.setEmailBlacklist(panel.getBlacklist());
+                
+                // Add a WindowListener to the JFrame
+                blacklistFrame.addWindowListener(new WindowListener() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        // Call your method here
+                    	EmailGUI.this.sender.setEmailBlacklist(BlacklistSerializer.deserializeBlacklist());
+                    }
+
+					@Override
+					public void windowOpened(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					@Override
+					public void windowClosed(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					@Override
+					public void windowIconified(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					@Override
+					public void windowDeiconified(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					@Override
+					public void windowActivated(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					@Override
+					public void windowDeactivated(WindowEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
+
+                    // Implement the remaining methods of the WindowListener interface
+                    // ...
+                });
+                
+                EmailGUI.this.sender.setEmailBlacklist(BlacklistSerializer.deserializeBlacklist());
             }
         });
 
         // Add the preview email panel to the main container
         add(previewEmailPanel);
-
+        
         // Set the size and positioning of the panel
         setSize(300, 300);
         setLocationRelativeTo(null);
+        pack();
         revalidate();
         repaint();
     }

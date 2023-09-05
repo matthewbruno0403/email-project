@@ -1,8 +1,6 @@
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,7 +9,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 public class EmailSender {
-    final String toEmail = "matthewbruno01@outlook.com";
+    //final String toEmail = "matthewbruno01@outlook.com";
     // psw: godusopp01@
     private String username;
     private String subject;
@@ -26,7 +24,8 @@ public class EmailSender {
         properties.put("mail.smtp.host", "smtp-mail.outlook.com");
         properties.put("mail.smtp.port", "587");
         properties.put("mail.smtp.auth", "true");
-        properties.put("mail.smtp.starttls.enable", "true");      
+        properties.put("mail.smtp.starttls.enable", "true");
+        this.emailBlacklist = BlacklistSerializer.deserializeBlacklist();
     }
     
     /**
@@ -56,25 +55,6 @@ public class EmailSender {
         System.out.println("Successfully signed in");
         return true;
     }
-  
-//    /**
-//     * Read the content from a file.
-//     * 
-//     * @param filePath The path of the file to read.
-//     * @return The content of the file as a string.
-//     */
-//    private String readContentFromFile(String filePath) {
-//        StringBuilder content = new StringBuilder();
-//        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-//            String line;
-//            while ((line = reader.readLine()) != null) {
-//                content.append(line).append("\n");
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return content.toString();
-//    }
     
     /**
      * Set the email-to-name mapping.
@@ -187,7 +167,7 @@ public class EmailSender {
     public boolean sendEmail(String emailSubject, String emailBody) throws MessagingException, IOException {
         Message message = new MimeMessage(this.session);
         message.setFrom(new InternetAddress(username));
-        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(this.username));
         message.setSubject(emailSubject);
         //emailContent = readContentFromFile("email_template.txt");
         message.setText(emailBody);
