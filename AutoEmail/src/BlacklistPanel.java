@@ -17,7 +17,7 @@ public class BlacklistPanel extends JPanel {
     private HashSet<String> emails;
 
     public BlacklistPanel() {
-        this.emails = this.deserializeBlacklist();
+        this.emails = BlacklistSerializer.deserializeBlacklist();
         setupUI();
     }
 
@@ -41,7 +41,7 @@ public class BlacklistPanel extends JPanel {
             String inputEmail = inputField.getText();
             if (isValidEmail(inputEmail)) { // Validate the input email
                 this.emails.add(inputEmail);
-                this.serializeBlacklist(); // Serialize the updated blacklist
+                BlacklistSerializer.serializeBlacklist(this.emails); // Serialize the updated blacklist
                 this.refreshList();
                 inputField.setText("");
             } else {
@@ -55,7 +55,7 @@ public class BlacklistPanel extends JPanel {
         // ActionListener for the removeButton
         removeButton.addActionListener(e -> {
             this.emails.remove(emailList.getSelectedValue());
-            this.serializeBlacklist(); // Serialize the updated blacklist
+            BlacklistSerializer.serializeBlacklist(this.emails); // Serialize the updated blacklist
             this.refreshList();
         });
         
@@ -68,36 +68,6 @@ public class BlacklistPanel extends JPanel {
         buttonPanel.add(removeButton);
         
         add(buttonPanel, BorderLayout.SOUTH);
-    }
-    
-    // Serializes the blacklist to a file
-    private void serializeBlacklist() {
-        try {
-            FileOutputStream fos = new FileOutputStream("blacklist.ser");
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(this.emails); // Write the HashSet object to the stream
-            oos.close();
-            fos.close();
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-    }
-    
-    // Deserializes the blacklist from a file
-    private HashSet<String> deserializeBlacklist() {
-        HashSet<String> deserializedEmails = new HashSet<>(); // Default, in case file does not exist or error occurs
-        try {
-            FileInputStream fis = new FileInputStream("blacklist.ser");
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            deserializedEmails = (HashSet) ois.readObject(); // Read the object from the stream and cast it to HashSet
-            ois.close();
-            fis.close();
-        } catch(IOException ioe) {
-            ioe.printStackTrace();
-        } catch(ClassNotFoundException cnfe) {
-            cnfe.printStackTrace();   
-        }
-        return deserializedEmails;
     }
 
     private void refreshList() {
