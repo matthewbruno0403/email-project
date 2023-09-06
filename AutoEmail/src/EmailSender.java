@@ -18,6 +18,7 @@ public class EmailSender {
     private Session session;
     private HashMap<String, String> emailNameMap;
     private HashSet<String> emailBlacklist;
+    private HashSet<String> blockedEmails;
     
     public EmailSender() {
         this.properties = new Properties();
@@ -26,6 +27,7 @@ public class EmailSender {
         properties.put("mail.smtp.auth", "true");
         properties.put("mail.smtp.starttls.enable", "true");
         this.emailBlacklist = BlacklistSerializer.deserializeBlacklist();
+        this.blockedEmails = new HashSet<>();
     }
     
     /**
@@ -109,10 +111,10 @@ public class EmailSender {
 
         for (String blacklistedEmail : this.emailBlacklist) {
             try {
-                if (this.emailNameMap.containsKey(blacklistedEmail)) { // Step 1: Check if the key exists in the map
-                    if (this.emailNameMap.remove(blacklistedEmail) != null) { // Step 2: Increment the count only if the key is successfully removed
-                        count++;
-                    }
+                if (this.emailNameMap.containsKey(blacklistedEmail)) {  // Step 1: Check if the key exists in the map
+                	this.blockedEmails.add(blacklistedEmail);
+                	this.emailNameMap.remove(blacklistedEmail); 		// Step 2: Increment the count only if the key is successfully removed
+                	count++;
                 }
             } catch (Exception e) {
                 // Handle the exception gracefully (if needed)
@@ -153,6 +155,15 @@ public class EmailSender {
         for(String email : this.emailBlacklist) {
             System.out.println(email);
         }
+    }
+    
+    public HashMap<String, String> getFilteredEmails(){
+    	filterBlacklistedEmails();
+    	return this.emailNameMap;
+    }
+    
+    public HashSet<String> getBlockedEmails(){
+    	return this.blockedEmails;
     }
 
     /**

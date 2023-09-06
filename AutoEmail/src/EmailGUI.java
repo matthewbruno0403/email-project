@@ -16,6 +16,8 @@ import jakarta.mail.MessagingException;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.HashSet;
 import java.util.prefs.Preferences;
 
 /**
@@ -28,6 +30,7 @@ public class EmailGUI extends JFrame {
     private JPanel loginPanel;
     private JPanel emailScreenPanel;
     private JPanel previewEmailPanel;
+    private JPanel resultsPanel;
     private EmailSender sender;
     private String subject = "";
     private String body = "";
@@ -51,12 +54,7 @@ public class EmailGUI extends JFrame {
         ActionListener loginActionListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                try {
-					performLogin();
-				} catch (AuthenticationFailedException e1) {
-					// Handle the exception specific to authentication failure
-					e1.printStackTrace();
-				}
+            	performLogin();
             }
         };
 
@@ -69,12 +67,7 @@ public class EmailGUI extends JFrame {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     // Perform login action
-                    try {
-                        performLogin();
-                    } catch (AuthenticationFailedException e1) {
-                        // Handle the exception specific to authentication failure
-                        e1.printStackTrace();
-                    }
+                    performLogin();
                 }
             }
 
@@ -109,12 +102,16 @@ public class EmailGUI extends JFrame {
      * Performs the login action.
      * @throws AuthenticationFailedException if the login fails.
      */
-    private void performLogin() throws AuthenticationFailedException {
+    private void performLogin() {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
         boolean loggedIn = false;
         
-        loggedIn = EmailGUI.this.sender.signIn(username, password);
+        try {
+        	loggedIn = EmailGUI.this.sender.signIn(username, password);
+        } catch(AuthenticationFailedException e) {
+        	loggedIn = false;
+        }
         
         // Perform login logic here
         if (loggedIn == true) {
@@ -271,7 +268,7 @@ public class EmailGUI extends JFrame {
 
         // Create the buttons
         JButton backButton = new JButton("Back");
-        JButton nextButton = new JButton("Send Final Email");
+        JButton nextButton = new JButton("Send All Emails");
         JButton sendPreviewEmailButton = new JButton("Send Preview Email");
         JButton blacklistButton = new JButton("Email Blacklist");
 
@@ -308,13 +305,22 @@ public class EmailGUI extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 // Code to handle "Next" button action
                 // EmailGUI.this.sender.getEmailBlacklistFromSender();
-                try {
-                    EmailGUI.this.sender.sendAllEmails(EmailGUI.this.subject, EmailGUI.this.body);
-                } catch (MessagingException e1) {
-                    e1.printStackTrace();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
+            	
+            	int option = JOptionPane.showConfirmDialog(EmailGUI.this, "Are you sure you want to send all emails?", "Confirmation", JOptionPane.YES_NO_OPTION);
+
+            	if (option == JOptionPane.YES_OPTION) {
+            		try {
+                        EmailGUI.this.sender.sendAllEmails(EmailGUI.this.subject, EmailGUI.this.body);
+                    } catch (MessagingException e1) {
+                        e1.printStackTrace();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+            		
+            		//go to final output panel
+            		sentEmailScreen();
+            	}
+            	
             }
         });
 
@@ -329,6 +335,7 @@ public class EmailGUI extends JFrame {
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
+                sentEmailScreen();
             }
         });
         
@@ -404,6 +411,66 @@ public class EmailGUI extends JFrame {
         setSize(300, 300);
         setLocationRelativeTo(null);
         pack();
+        revalidate();
+        repaint();
+    }
+    
+    private void sentEmailScreen() {
+        // Hide this panel
+        previewEmailPanel.setVisible(false);
+        
+        // After sending emails, display results.
+        HashMap<String, String> sentEmails = EmailGUI.this.sender.getFilteredEmails();
+        HashSet<String> notSentEmails = EmailGUI.this.sender.getBlockedEmails();
+
+        resultsPanel = new JPanel();
+        resultsPanel.setLayout(new BorderLayout());
+
+        JTextArea sentEmailsArea = new JTextArea(10,20);
+        sentEmailsArea.setText("Sent Emails:\n");
+        for(Map.Entry<String, String> entry : sentEmails.entrySet()) {
+            sentEmailsArea.append(entry.getKey() + ": " + entry.getValue() + "\n");
+        }
+        sentEmailsArea.setEditable(false);
+
+        JTextArea notSentEmailsArea = new JTextArea(10,20);
+        notSentEmailsArea.setText("Blocked Emails:\n");
+        if(notSentEmails != null) {
+        	for(String email : notSentEmails) {
+                notSentEmailsArea.append(email + "\n");
+            }
+        }
+        
+        notSentEmailsArea.setEditable(false);
+
+        resultsPanel.add(new JScrollPane(sentEmailsArea), BorderLayout.NORTH);
+        resultsPanel.add(new JScrollPane(notSentEmailsArea), BorderLayout.CENTER);
+
+
+        JButton closeButton = new JButton("Close");
+        closeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Close the current frame (or any other desired action)
+                EmailGUI.this.dispose();
+            }
+        });
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.add(closeButton);
+
+        resultsPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Remove the existing panel
+        getContentPane().removeAll();
+        // Add the email screen panel to the frame
+        getContentPane().add(resultsPanel);
+        
+        // Set the size and position of the frame
+        setSize(300, 425);
+        setLocationRelativeTo(null);
+
         revalidate();
         repaint();
     }
