@@ -67,6 +67,13 @@ public class EmailSender {
         this.emailNameMap = emailNameMap;
     }
     
+    public boolean emailNameMapIsNull(){
+    	if(this.emailNameMap == null) {
+    		return true;
+    	}
+    	return false;
+    }
+    
     /**
      * Get the subject of the email.
      * 
@@ -199,13 +206,15 @@ public class EmailSender {
      */
     public boolean sendAllEmails(String emailSubject, String emailBodyTemplate) throws MessagingException, IOException {
         filterBlacklistedEmails();
+        String placeholderPattern = "(([\\{\\(\\[])([Nn][Aa][Mm][Ee])([})\\]]))";
+        
     	for (Map.Entry<String, String> entry : this.emailNameMap.entrySet()) {
             // Extract the first name from entry.getValue()
             String[] names = entry.getValue().split("\\s");
             String firstName = names[0];
 
             // Rest of the code
-            String emailBody = emailBodyTemplate.replace("[NAME]", firstName);
+            String emailBody = emailBodyTemplate.replaceAll(placeholderPattern, firstName);
             Message message = new MimeMessage(this.session);
             message.setFrom(new InternetAddress(username));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(entry.getKey()));

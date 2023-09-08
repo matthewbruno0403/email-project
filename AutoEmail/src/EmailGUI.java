@@ -117,19 +117,17 @@ public class EmailGUI extends JFrame {
         if (loggedIn == true) {
             // Successful login, route to new screen or perform other operations
             JOptionPane.showMessageDialog(null, "Login successful!");
-            showNewScreen(); // Code to show new screen
+            writeEmailScreen(); // Code to show new screen
         } else {
             // Invalid login, print error and clear fields
             JOptionPane.showMessageDialog(null, "Invalid username or password!", "Error", JOptionPane.ERROR_MESSAGE);
             usernameField.setText("");
             passwordField.setText("");
-            //remove later!! 
-            //showNewScreen();
         }
     }
 
- // Method to show the new screen after successful login
-    private void showNewScreen() {
+    // Method to show the new screen after successful login
+    private void writeEmailScreen() {
         // Hide the login panel
         loginPanel.setVisible(false);
 
@@ -295,7 +293,7 @@ public class EmailGUI extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Code to handle "Back" button action
-                EmailGUI.this.showNewScreen();
+                EmailGUI.this.writeEmailScreen();
                 previewEmailPanel.setVisible(false);
             }
         });
@@ -303,22 +301,28 @@ public class EmailGUI extends JFrame {
         nextButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Code to handle "Next" button action
+                // Code to handle "Send All Emails" button action
                 // EmailGUI.this.sender.getEmailBlacklistFromSender();
             	
             	int option = JOptionPane.showConfirmDialog(EmailGUI.this, "Are you sure you want to send all emails?", "Confirmation", JOptionPane.YES_NO_OPTION);
 
             	if (option == JOptionPane.YES_OPTION) {
-            		try {
-                        EmailGUI.this.sender.sendAllEmails(EmailGUI.this.subject, EmailGUI.this.body);
-                    } catch (MessagingException e1) {
-                        e1.printStackTrace();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-            		
-            		//go to final output panel
-            		sentEmailScreen();
+            		if(!EmailGUI.this.sender.emailNameMapIsNull()){
+            			try {
+                            EmailGUI.this.sender.sendAllEmails(EmailGUI.this.subject, EmailGUI.this.body);
+                        } catch (MessagingException e1) {
+                            e1.printStackTrace();
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
+            			
+            			//go to final output panel
+                		sentEmailScreen();
+            		} 
+            		else {
+            			// Display an error message if the PDF was not uploaded
+                        JOptionPane.showMessageDialog(null, "PDF was not uploaded. Please upload a PDF before sending", "Error", JOptionPane.ERROR_MESSAGE);
+            		}	
             	}
             	
             }
@@ -335,7 +339,6 @@ public class EmailGUI extends JFrame {
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-                sentEmailScreen();
             }
         });
         
