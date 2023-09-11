@@ -144,6 +144,7 @@ public class EmailGUI extends JFrame {
         // Create buttons for uploading PDF and proceeding to the next step
         JButton uploadButton = new JButton("Upload PDF");
         JButton nextButton = new JButton("Next");
+        JButton attachFileButton = new JButton("Attach File");
 
         // ActionListener for the "Next" button
         ActionListener nextActionListener = new ActionListener() {
@@ -204,6 +205,32 @@ public class EmailGUI extends JFrame {
                 }
             }
         });
+        
+        // ActionListener for the "Attach File" button
+        attachFileButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                // Create a file chooser dialog
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+                int result = fileChooser.showOpenDialog(EmailGUI.this);
+
+                // If a file is selected, attach the file
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    // Attach the file to the email
+                    try {
+                        EmailGUI.this.sender.attachFile(selectedFile);
+                        // Display a success message
+                        JOptionPane.showMessageDialog(EmailGUI.this, "File attached successfully!");
+                    } catch (MessagingException e1) {
+                        // Display an error message
+                        JOptionPane.showMessageDialog(EmailGUI.this, "Failed to attach file.", "Error", JOptionPane.ERROR_MESSAGE);
+                        e1.printStackTrace();
+                    }
+                }
+            }
+        });
+
 
         // Add action listeners to the "Next" button
         nextButton.addActionListener(nextActionListener);
@@ -212,6 +239,7 @@ public class EmailGUI extends JFrame {
         // Create a panel for the buttons
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(attachFileButton);
         buttonPanel.add(uploadButton);
         buttonPanel.add(nextButton);
 

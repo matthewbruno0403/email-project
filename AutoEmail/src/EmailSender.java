@@ -1,12 +1,18 @@
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.activation.FileDataSource;
+
 
 public class EmailSender {
     //final String toEmail = "matthewbruno01@outlook.com";
@@ -19,6 +25,7 @@ public class EmailSender {
     private HashMap<String, String> emailNameMap;
     private HashSet<String> emailBlacklist;
     private HashSet<String> blockedEmails;
+    private Multipart multipart;
     
     public EmailSender() {
         this.properties = new Properties();
@@ -28,6 +35,7 @@ public class EmailSender {
         properties.put("mail.smtp.starttls.enable", "true");
         this.emailBlacklist = BlacklistSerializer.deserializeBlacklist();
         this.blockedEmails = new HashSet<>();
+        multipart = new MimeMultipart();
     }
     
     /**
@@ -172,6 +180,14 @@ public class EmailSender {
     public HashSet<String> getBlockedEmails(){
     	return this.blockedEmails;
     }
+    
+    public void attachFile(File file) throws MessagingException {
+        MimeBodyPart messageBodyPart = new MimeBodyPart();
+        DataSource source = new FileDataSource(file);
+        messageBodyPart.setDataHandler(new DataHandler(source));
+        messageBodyPart.setFileName(file.getName());
+        multipart.addBodyPart(messageBodyPart);
+    }
 
     /**
      * Sends an email with the specified subject and body.
@@ -187,8 +203,17 @@ public class EmailSender {
         message.setFrom(new InternetAddress(username));
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(this.username));
         message.setSubject(emailSubject);
-        //emailContent = readContentFromFile("email_template.txt");
-        message.setText(emailBody);
+        
+        // Create a body part for the text message
+        MimeBodyPart messageBodyPart = new MimeBodyPart();
+        messageBodyPart.setText(emailBody);
+
+        // Add the body part to the multipart
+        multipart.addBodyPart(messageBodyPart);
+
+        // Set the content of the message to be the multipart
+        message.setContent(multipart);
+        
         Transport.send(message);
         System.out.println("Sent message successfully....");
         return true;
@@ -209,17 +234,34 @@ public class EmailSender {
         String placeholderPattern = "(([\\{\\(\\[])([Nn][Aa][Mm][Ee])([})\\]]))";
         
     	for (Map.Entry<String, String> entry : this.emailNameMap.entrySet()) {
-            // Extract the first name from entry.getValue()
+    		// Create a new Multipart object for each email
+            Multipart multipartTmp = new MimeMultipart();
+    		
+    		// Extract the first name from entry.getValue()
             String[] names = entry.getValue().split("\\s");
             String firstName = names[0];
-
-            // Rest of the code
             String emailBody = emailBodyTemplate.replaceAll(placeholderPattern, firstName);
+            
             Message message = new MimeMessage(this.session);
             message.setFrom(new InternetAddress(username));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(entry.getKey()));
             message.setSubject(emailSubject);
-            message.setText(emailBody);
+            
+            // Create a body part for the text message
+            MimeBodyPart messageBodyPart = new MimeBodyPart();
+            messageBodyPart.setText(emailBody);
+
+            // Add the body part to the multipart
+            multipartTmp.addBodyPart(messageBodyPart);
+            
+            // Merge the attachment Multipart with the existing Multipart
+            for (int i = 0; i < multipart.getCount(); i++) {
+                multipartTmp.addBodyPart(multipart.getBodyPart(i));
+            }
+
+            // Set the content of the message to be the multipart
+            message.setContent(multipartTmp);
+
             Transport.send(message);
             System.out.println("Sent message successfully to " + entry.getKey() + " / " + entry.getValue());
         }
